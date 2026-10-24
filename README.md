@@ -1,10 +1,10 @@
 <div align="center">
 
-# UniCaMo · Noise in Motion
+# Track the Noise, Move the World
 
-### Track noise through 3D motion. Share noise across camera views.
+### 3D-Grounded Motion-Consistent Noise for Controllable Video Generation
 
-Independent UniCaMo noise construction · Synthetic scenes · Reproducible statistics
+[Unofficial] Independent UniCaMo noise construction · Synthetic scenes · Reproducible statistics
 
 ![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![CPU only](https://img.shields.io/badge/Runtime-CPU-0F766E?style=flat-square)
