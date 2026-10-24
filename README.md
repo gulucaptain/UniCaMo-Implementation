@@ -1,10 +1,10 @@
 <div align="center">
 
-# Track the Noise, Move the World
+# [Unofficial] Track the Noise, Move the World
 
 ### 3D-Grounded Motion-Consistent Noise for Controllable Video Generation
 
-[Unofficial] Independent UniCaMo noise construction · Synthetic scenes · Reproducible statistics
+Independent UniCaMo noise construction · Synthetic scenes · Reproducible statistics
 
 ![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![CPU only](https://img.shields.io/badge/Runtime-CPU-0F766E?style=flat-square)
