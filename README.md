@@ -6,14 +6,7 @@
 
 Independent UniCaMo noise construction · Synthetic scenes · Reproducible statistics
 
-![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)
-![CPU only](https://img.shields.io/badge/Runtime-CPU-0F766E?style=flat-square)
-![NumPy + Pillow](https://img.shields.io/badge/Dependencies-NumPy%20%2B%20Pillow-6366F1?style=flat-square)
-![Recorded tests: 10 passed](https://img.shields.io/badge/Recorded_tests-10_passed-16A34A?style=flat-square)
-
-**English** · [简体中文](README_zh.md)
-
-[Paper](https://arxiv.org/abs/2607.02798v1) · [Authors’ Project](https://phongnhhn.info/Unicamo/) · [Paper Audit](docs/PAPER_AUDIT.md) · [Results](results/REPORT.md)
+**English** · [简体中文](README_zh.md) · [Paper](https://arxiv.org/abs/2607.02798v1) · [Paper Audit](docs/PAPER_AUDIT.md) · [Results](results/REPORT.md)
 
 </div>
 
@@ -207,6 +200,16 @@ docs/PAPER_AUDIT.md         Explicit paper requirements versus interpretations
 results/                   GIFs, PNGs, NPZ arrays, JSON metrics, and report
 ```
 
-## Reference
+## Citation
 
-Long Vu, Tan Ngo, Animesh Karnewar, Amir Habibian, Binh-Son Hua, Hung Bui, Minh Hoai Nguyen, and Phong Nguyen-Ha. *Track the Noise, Move the World: 3D-Grounded Motion-Consistent Noise for Controllable Video Generation*. arXiv:2607.02798v1, 2026. [Paper](https://arxiv.org/abs/2607.02798v1) · [Authors' project page](https://phongnhhn.info/Unicamo/).
+```bibtex
+@misc{vu2026tracknoise,
+  title         = {Track the Noise, Move the World: 3D-Grounded Motion-Consistent Noise for Controllable Video Generation},
+  author        = {Long Vu and Tan Ngo and Animesh Karnewar and Amir Habibian and Binh-Son Hua and Hung Bui and Minh Hoai Nguyen and Phong Nguyen-Ha},
+  year          = {2026},
+  eprint        = {2607.02798},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CV},
+  url           = {https://arxiv.org/abs/2607.02798v1}
+}
+```
