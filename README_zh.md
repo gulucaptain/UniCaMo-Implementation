@@ -6,7 +6,7 @@
 
 独立的 UniCaMo 噪声构造实现 · 合成场景 · 可追溯统计
 
-[English](README.md) · **简体中文** · [论文](https://arxiv.org/abs/2607.02798v1) · [复现核对](docs/PAPER_AUDIT.md) · [实验结果](results/REPORT.md)
+[![English](https://img.shields.io/badge/English-64748B?style=flat-square&logo=googletranslate&logoColor=white)](README.md) [![简体中文](https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-2563EB?style=flat-square&logo=googletranslate&logoColor=white)](README_zh.md) [![Paper](https://img.shields.io/badge/Paper-B31B1B?style=flat-square&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2607.02798v1) [![Paper Audit](https://img.shields.io/badge/Paper%20Audit-475569?style=flat-square&logo=readthedocs&logoColor=white)](docs/PAPER_AUDIT.md) [![Results](https://img.shields.io/badge/Results-0F766E?style=flat-square&logo=chartdotjs&logoColor=white)](results/REPORT.md)
 
 </div>
 
