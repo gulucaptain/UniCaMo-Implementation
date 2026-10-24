@@ -1,0 +1,22 @@
+{
+  "object_translation": {
+    "same_source_max_error": 0.0,
+    "track_copy_max_error": 0.0,
+    "marginal_variance_ok": true
+  },
+  "occlusion": {
+    "same_source_max_error": 0.0,
+    "track_copy_max_error": 0.0,
+    "marginal_variance_ok": true
+  },
+  "camera_rotation": {
+    "same_source_max_error": 0.0,
+    "track_copy_max_error": 0.0,
+    "marginal_variance_ok": true
+  },
+  "camera_translation": {
+    "same_source_max_error": 0.0,
+    "track_copy_max_error": 0.0,
+    "marginal_variance_ok": true
+  }
+}
