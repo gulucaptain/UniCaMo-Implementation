@@ -1,12 +1,64 @@
-# UniCaMo 独立噪声构造复现
+<div align="center">
 
-本项目根据 [UniCaMo v1 论文](https://arxiv.org/html/2607.02798v1) 实现独立的噪声构造模块，包含物体平移、前后遮挡、相机旋转和平移四组实验及噪声统计。**这是非官方的论文描述实现**，不包含 Wan、LoRA 训练或生成视频效果复现。
+# UniCaMo · Noise in Motion
 
-[英文首页与动画预览](README.md) · [正文及附录逐项核对](docs/PAPER_AUDIT.md) · [结果报告](results/REPORT.md)
+### 让噪声沿三维轨迹移动，让视角共享同一片噪声。
 
-## 安装与运行
+独立的 UniCaMo 噪声构造实现 · 合成场景 · 可追溯统计
 
-Python 3.9 及以上，仅需 NumPy 和 Pillow，可在 CPU 上运行。
+![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![CPU only](https://img.shields.io/badge/Runtime-CPU-0F766E?style=flat-square)
+![NumPy + Pillow](https://img.shields.io/badge/Dependencies-NumPy%20%2B%20Pillow-6366F1?style=flat-square)
+![Recorded tests: 10 passed](https://img.shields.io/badge/Recorded_tests-10_passed-16A34A?style=flat-square)
+
+[English](README.md) · **简体中文**
+
+[Paper](https://arxiv.org/abs/2607.02798v1) · [Authors’ Project](https://phongnhhn.info/Unicamo/) · [Paper Audit](docs/PAPER_AUDIT.md) · [Results](results/REPORT.md)
+
+</div>
+
+---
+
+用可检查的随机源，观察**三维运动如何成为噪声中的时间相关性**。本项目实现 UniCaMo 的独立噪声构造，并提供四组合成场景、完整浮点数据和统计验证。
+
+> **项目范围：** 非官方的论文描述实现，聚焦噪声模块。论文未明确的细节逐项记录在[核对表](docs/PAPER_AUDIT.md)中；Wan 接入与 LoRA 训练不在本仓库范围内。
+
+[**查看动画 ↓**](#运动可视化) · [**开始运行 ↓**](#快速开始) · [**接入自己的数据 ↓**](#接入自己的轨迹与相机)
+
+## 运动可视化
+
+每组动画从左到右依次呈现：
+
+**轨迹噪声 → 球面采样 → Raw 合成 → 最终混合噪声 → 所有权**
+
+青色与橙色表示两组前景，蓝灰色表示背景轨迹，紫色表示首帧未被轨迹覆盖的参考源。动画使用固定灰度范围；统计直接使用原始浮点值。
+
+#### 物体平移
+
+![物体平移](results/object_translation.gif)
+
+#### 遮挡与前后关系交换
+
+![遮挡与前后关系交换](results/occlusion.gif)
+
+<details>
+<summary><b>相机旋转</b></summary>
+
+![相机旋转](results/camera_rotation.gif)
+
+</details>
+
+<details>
+<summary><b>相机平移</b></summary>
+
+![相机平移](results/camera_translation.gif)
+
+</details>
+## 快速开始
+
+**Python 3.9+ · CPU 可运行 · 仅依赖 NumPy 与 Pillow**
+
+**1. 配置环境**
 
 ```sh
 git clone https://github.com/gulucaptain/UniCaMo-Implementation.git
@@ -14,21 +66,95 @@ cd UniCaMo-Implementation
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+```
+
+**2. 运行测试与实验**
+
+```sh
 python -m unittest discover -s tests -v
 python examples/run_synthetic.py
 ```
 
-运行后重新生成 results/ 下的全部动画、静态图、浮点 NPZ、统计 JSON 和报告，覆盖同名结果。固定随机种子；环境与源码哈希保存在 manifest.json。若需在其他项目中导入，执行 `python -m pip install -e .`。
+脚本会生成四组主场景、20 个独立随机种子的遮挡实验、首帧策略对照和纯球面诊断。输出覆盖 `results/` 中的同名文件，运行需预留数百 MB 内存。
 
-## 原理
+<details>
+<summary><b>输出文件与环境说明</b></summary>
 
-- Track-the-Noise：三维点经相机投影到噪声网格，沿轨迹复制首帧不可变的 3×3 噪声块；重叠时选相机深度最近者。
-- Move-the-World：以首帧相机为球心，为整段视频共享一张球面高斯纹理，按每帧射线求交取样。
-- 合成：轨迹噪声优先，未覆盖区域用球面噪声填充，再进行有明确标注的线性混合。
+| 文件 | 内容 |
+| :--- | :--- |
+| `*.gif` / `*.png` | 动画与静态预览 |
+| `*.npz` | 完整噪声、几何、来源与配置，每场景约 28 MB |
+| `statistics.json` | 分布矩、空间与时间相关性、敏感性对照 |
+| `ensemble_samples.json` | 20 个种子的逐次测量 |
+| `validation.json` | 来源一致性与复制误差检查 |
+| `manifest.json` | 运行环境与源码哈希 |
+| `REPORT.md` | 实验报告 |
 
-相机固定时物体仍可移动：输入的物体三维坐标随时间改变，投影位置也随之改变；球面分支保持静止。
+随机种子固定；不同依赖版本可能影响浮点细节和图片编码，环境会写入 manifest。若需在其他项目导入，执行 `python -m pip install -e .`。
 
-## 输入与调用
+</details>
+
+## 噪声如何构造
+
+| 阶段 | 操作 | 表达的信息 |
+| :--- | :--- | :--- |
+| **Track-the-Noise** | 投影三维轨迹，复制首帧不可变的 3×3 噪声块 | 局部运动 |
+| **深度选择** | 重叠位置保留正相机深度最近的贡献 | 前后遮挡关系 |
+| **Move-the-World** | 射线与共享高斯噪声球面求交并采样 | 跨视角噪声对应 |
+| **合成** | 轨迹优先，球面填充未覆盖区 | 完整噪声序列 |
+| **Degradation** | 采用有明确标注的线性混合解释 | 额外独立噪声 |
+
+物体轨迹与相机参数分别输入。相机固定时，物体的世界坐标仍可改变，投影位置及噪声块随之移动；球面分支则保持静止。
+
+## 统计验证
+
+| 检查 | 已记录结果 |
+| :--- | :--- |
+| 几何、复制、可见性与混合 | **10 项测试通过** |
+| 相同来源的 Raw 噪声 | **逐元素完全一致** |
+| 最大复制误差 | **0** |
+| 20 个遮挡种子的最终方差 | **0.68034 ± 0.00191**（种子间标准差） |
+
+默认采用 `0.8 × raw + 0.2 × iid` 的线性混合解释，理论边缘方差为 **0.68**，不进行方差归一化。相关性与噪声来源复用的预测对照，不把全部时空样本视为独立样本。
+
+| 场景 | Raw 方差 | 最终方差 | Raw 时间相关 | 来源预测 |
+| :--- | ---: | ---: | ---: | ---: |
+| 物体平移 | 1.0075 | 0.6846 | 0.9304 | 0.9302 |
+| 前后遮挡 | 1.0088 | 0.6854 | 0.8856 | 0.8842 |
+| 相机旋转 | 1.0048 | 0.6830 | 0.0002 | 0.0000 |
+| 相机平移 | 1.0037 | 0.6824 | 0.1520 | 0.1516 |
+
+![方差、分布与时间相关性](results/statistics.png)
+
+<details>
+<summary><b>合成场景配置与数据读取</b></summary>
+
+| 配置 | 数值 |
+| :--- | :--- |
+| 序列 | 25 个噪声时刻，16 通道 |
+| 引导 | 每组主场景 1,024 条轨迹 |
+| 图像 / 噪声网格 | 128×192 / 64×96 |
+| 球面纹理 | 512×768，即图像尺寸 ×4 |
+| 主实验种子 | 42 |
+| 几何 | 合成前景与静态背景平面 |
+
+这些尺寸是实验设置，不代表 Wan 的 VAE 配置。物体点数和轨迹是测试输入，未运行论文的 GUI 或真实视频几何估计流程。
+
+```python
+import numpy as np
+
+with np.load('results/occlusion.npz', allow_pickle=False) as data:
+    noise = data['noise']    # [T, H_lat, W_lat, C], float32
+    tracks = data['tracks']  # [T, N, 3]，世界坐标
+```
+
+NPZ 同时保存 Raw 噪声、球面采样、首帧源、来源编号、所有权、覆盖、深度、投影、相机参数、可见性及配置。
+
+</details>
+
+[**查看完整实验报告 →**](results/REPORT.md)
+
+## 接入自己的轨迹与相机
 
 ```python
 import numpy as np
@@ -59,23 +185,12 @@ np.save('noise.npy', result['noise'])
 
 其他输出包括 source（原始噪声来源编号）、owner（轨迹编号；-1 球面，-2 首帧未覆盖参考源）、track_coverage、depth、reference、投影和 config_json。NPZ 无需 pickle 即可加载。
 
-## 结果与验证
+## 论文实现核对
 
-四组主场景各有 1024 条轨迹、25 帧、16 通道；图像 128×192，噪声网格 64×96，球面纹理 512×768。背景为静态平面，物体轨迹为合成测试输入；没有复现论文的 GUI 和真实视频几何估计。
+[逐项核对表](docs/PAPER_AUDIT.md)对应正文和附录，区分论文明确要求与实现时必须补充的约定。
 
-10 项测试通过；同源 raw 噪声逐元素一致，复制误差为 0。默认线性混合 `0.8 raw + 0.2 iid` 的理论方差为 0.68；20 个独立种子的遮挡场景平均方差为 0.68034，种子间标准差为 0.00191。
-
-动画左到右为：轨迹、球面、raw 合成、混合后最终噪声、所有权。固定 [-3,3] 灰度显示，统计不截断。
-
-- [物体平移](results/object_translation.gif)
-- [前后遮挡](results/occlusion.gif)
-- [相机旋转](results/camera_rotation.gif)
-- [相机平移](results/camera_translation.gif)
-- [完整统计](results/statistics.json)、[20 种子明细](results/ensemble_samples.json)、[验证记录](results/validation.json)
-
-四个 NPZ 各约 28 MB，保留完整浮点结果和几何输入；可重跑生成。
-
-## 对论文的忠实程度
+<details>
+<summary><b>展开未解决的细节与复现边界</b></summary>
 
 论文明确部分严格按描述实现；具体对应见 [核对表](docs/PAPER_AUDIT.md)。未写清楚的部分均作标注：
 
@@ -86,3 +201,19 @@ np.save('noise.npy', result['noise'])
 5. 输入时刻与噪声帧一一对应；不处理 VAE 时间压缩。
 
 测试通过表示代码符合这些明确约定，不能证明与作者代码逐值一致，也不能证明优于 Go-with-the-Flow 或得到论文级视频效果。此前探索版本保留于原 CameraNoise 工作区，此仓库仅发布论文核对版 v2。
+
+</details>
+
+## 项目结构
+
+```text
+unicamo_noise/core.py       噪声构造与几何采样
+examples/run_synthetic.py  合成场景、可视化和统计
+tests/                     几何与噪声统计测试
+docs/PAPER_AUDIT.md         正文与附录逐项核对
+results/                   动画、浮点数据与结果报告
+```
+
+## 参考论文
+
+Long Vu, Tan Ngo, Animesh Karnewar, Amir Habibian, Binh-Son Hua, Hung Bui, Minh Hoai Nguyen, and Phong Nguyen-Ha. *Track the Noise, Move the World: 3D-Grounded Motion-Consistent Noise for Controllable Video Generation*. arXiv:2607.02798v1, 2026. [Paper](https://arxiv.org/abs/2607.02798v1) · [Authors' project page](https://phongnhhn.info/Unicamo/).

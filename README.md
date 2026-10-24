@@ -1,14 +1,64 @@
-# UniCaMo Noise Construction — Independent Implementation
+<div align="center">
 
-An independent NumPy implementation of the noise construction described in [Track the Noise, Move the World: 3D-Grounded Motion-Consistent Noise for Controllable Video Generation (arXiv:2607.02798v1)](https://arxiv.org/abs/2607.02798v1).
+# UniCaMo · Noise in Motion
 
-**This is not the authors' official implementation.** It reproduces the explicitly described noise operations and documents every unresolved implementation choice. It does not include Wan, LoRA training, learned depth/tracking models, or a claim to reproduce the paper's generated videos or benchmark scores.
+### Track noise through 3D motion. Share noise across camera views.
 
-[中文使用说明](README_zh.md) · [逐项论文核对表 / Paper audit](docs/PAPER_AUDIT.md) · [实验结果 / Results](results/REPORT.md)
+Independent UniCaMo noise construction · Synthetic scenes · Reproducible statistics
 
+![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![CPU only](https://img.shields.io/badge/Runtime-CPU-0F766E?style=flat-square)
+![NumPy + Pillow](https://img.shields.io/badge/Dependencies-NumPy%20%2B%20Pillow-6366F1?style=flat-square)
+![Recorded tests: 10 passed](https://img.shields.io/badge/Recorded_tests-10_passed-16A34A?style=flat-square)
+
+**English** · [简体中文](README_zh.md)
+
+[Paper](https://arxiv.org/abs/2607.02798v1) · [Authors’ Project](https://phongnhhn.info/Unicamo/) · [Paper Audit](docs/PAPER_AUDIT.md) · [Results](results/REPORT.md)
+
+</div>
+
+---
+
+A small, CPU-ready implementation of the **structured noise construction** in UniCaMo. Explore object motion, depth ordering, and changing camera views with inspectable noise sources and recorded statistics.
+
+> **Scope:** Independent implementation of the paper’s noise module. Wan integration and LoRA training are outside this repository. Ambiguous paper details are documented in the [implementation audit](docs/PAPER_AUDIT.md).
+
+[**Explore the demos ↓**](#motion-gallery) · [**Run locally ↓**](#quick-start) · [**Use your own inputs ↓**](#bring-your-own-tracks)
+
+## Motion gallery
+
+Every animation shows the same five stages, from geometric guidance to the final noise:
+
+**Track patches → Sphere samples → Composed raw noise → Final blended noise → Ownership**
+
+Cyan and orange mark foreground groups; blue-gray marks background tracks; purple marks untracked first-frame reference noise. The previews use a fixed grayscale range; statistics use the original floating-point values.
+
+#### Object translation
+
+![Object translation](results/object_translation.gif)
+
+#### Occlusion & depth-order swaps
+
+![Occlusion & depth-order swaps](results/occlusion.gif)
+
+<details>
+<summary><b>Camera rotation</b></summary>
+
+![Camera rotation](results/camera_rotation.gif)
+
+</details>
+
+<details>
+<summary><b>Camera translation</b></summary>
+
+![Camera translation](results/camera_translation.gif)
+
+</details>
 ## Quick start
 
-Python 3.9+; CPU only. NumPy and Pillow are the only runtime dependencies.
+**Python 3.9+ · CPU · NumPy + Pillow**
+
+**1. Set up the environment**
 
 ```sh
 git clone https://github.com/gulucaptain/UniCaMo-Implementation.git
@@ -16,52 +66,95 @@ cd UniCaMo-Implementation
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+```
+
+**2. Test and reproduce the results**
+
+```sh
 python -m unittest discover -s tests -v
 python examples/run_synthetic.py
 ```
 
-The experiment exports four 25-frame GIFs, PNG previews, raw floating-point NPZ files, and statistical reports into `results/`. It also runs 20 independent seeds for the occlusion scene, first-frame policy sensitivity checks, and sphere-only diagnostics. Running it replaces the supplied results with the same seeded experiment. Numerical and image-encoding details can differ across dependency versions; `results/manifest.json` records the execution environment and source hashes. Allow a few hundred MB of available memory.
+The script regenerates all four scenes, 20 independent occlusion seeds, first-frame policy comparisons, and sphere-only diagnostics. Outputs replace the matching files in `results/`. Allow a few hundred MB of available memory.
 
-For importing outside the checkout, install with `python -m pip install -e .`.
+<details>
+<summary><b>Generated files & environment notes</b></summary>
 
-## What is implemented
+| Output | Contents |
+| :--- | :--- |
+| `*.gif` / `*.png` | Animations and static previews |
+| `*.npz` | Full noise arrays, geometry, provenance, and configuration; about 28 MB per scene |
+| `statistics.json` | Moments, spatial/temporal correlations, and sensitivity checks |
+| `ensemble_samples.json` | Individual measurements for all 20 seeds |
+| `validation.json` | Source identity and copy-error checks |
+| `manifest.json` | Runtime versions and source hashes |
+| `REPORT.md` | Experiment summary |
 
-1. Project world-space 3D point tracks with camera intrinsics/extrinsics, then scale to the noise grid.
-2. Copy immutable first-frame Gaussian noise patches along the projected tracks; default radius R=2 gives 3×3 patches.
-3. Resolve overlapping patches using the smallest positive camera-space depth.
-4. Sample a shared Gaussian sphere texture using the ray/sphere and UV equations from Appendix A.3, with nearest-neighbor texture lookup.
-5. Fill uncovered locations with sphere noise and apply a separately identified linear alpha-blending interpretation.
+Seeds are fixed. Numerical and image-encoding details can differ across dependency versions; the manifest records the environment. To import from outside this checkout, run `python -m pip install -e .`.
 
-Camera parameters alone do not move object noise: object tracks change in world space and consequently change their projections even when the camera is fixed. These inputs are explicit; the synthetic demos do not infer motion from images.
+</details>
 
-## Synthetic results
+## How the noise is built
 
-Each main scene has 1,024 tracks, 25 time steps, 16 noise channels, a 128×192 image grid, and a 64×96 noise grid. The sphere texture is 512×768 (image dimensions ×4). Foreground counts and trajectories are test fixtures; this is not the paper's mask GUI or training data pipeline.
+| Stage | Operation | What it encodes |
+| :--- | :--- | :--- |
+| **Track-the-Noise** | Project 3D tracks; copy immutable first-frame 3×3 patches | Local motion |
+| **Depth selection** | Keep the nearest positive camera-depth contribution at overlaps | Occlusion ordering |
+| **Move-the-World** | Cast rays into a shared Gaussian sphere texture | View-dependent noise correspondence |
+| **Composition** | Keep track patches; fill uncovered regions from the sphere | A complete noise sequence |
+| **Degradation** | Apply the documented linear alpha-blending interpretation | Additional independent noise |
 
-Panels: track patches → sphere samples → composed raw noise → final blended noise → ownership. Cyan/orange identify foreground groups; blue-gray identifies static background tracks; purple identifies untracked first-frame reference noise. Display clipping affects previews only.
+Object tracks and camera parameters are separate inputs. A moving 3D point changes its image projection even under a fixed camera, so its noise patch moves while the sphere samples remain stationary.
 
-| Object translation | Occlusion / depth-order swap |
-|---|---|
-| ![Object translation](results/object_translation.gif) | ![Occlusion](results/occlusion.gif) |
+## Measured, not just visualized
 
-| Camera rotation | Camera translation |
-|---|---|
-| ![Camera rotation](results/camera_rotation.gif) | ![Camera translation](results/camera_translation.gif) |
+| Checks | Recorded result |
+| :--- | :--- |
+| Geometry, copying, visibility, and blending | **10 tests passed** |
+| Raw noise from identical source IDs | **Exactly identical** |
+| Maximum copy error | **0** |
+| Mean final variance over 20 occlusion seeds | **0.68034 ± 0.00191** (between-seed standard deviation) |
 
-![Noise statistics](results/statistics.png)
+The default interpretation is `0.8 × raw + 0.2 × iid`, with theoretical marginal variance **0.68**. No variance renormalization is applied. Source reuse predicts correlations; samples across pixels and frames are not assumed independent.
 
-The recorded run passed 10 tests. Identical source IDs have exactly identical raw noise vectors. For the default linear mixture `0.8 * raw + 0.2 * iid`, theoretical marginal variance is **0.68**, not 1. The 20-seed occlusion experiment measures a mean variance of **0.68034** (between-seed standard deviation **0.00191**). Correlation is measured against source-ID reuse, rather than assuming that every space/time sample is independent.
+| Scene | Raw variance | Final variance | Raw temporal correlation | Source-ID prediction |
+| :--- | ---: | ---: | ---: | ---: |
+| Object translation | 1.0075 | 0.6846 | 0.9304 | 0.9302 |
+| Occlusion | 1.0088 | 0.6854 | 0.8856 | 0.8842 |
+| Camera rotation | 1.0048 | 0.6830 | 0.0002 | 0.0000 |
+| Camera translation | 1.0037 | 0.6824 | 0.1520 | 0.1516 |
 
-The four NPZ files (about 28 MB each) contain noise, raw noise, sphere samples, the initial reference, source IDs, ownership, coverage, depth, projections, input tracks, camera parameters, visibility, and configuration. Load them without pickle:
+![Variance, distribution, and temporal correlation](results/statistics.png)
+
+<details>
+<summary><b>Experiment settings & loading the arrays</b></summary>
+
+| Setting | Value |
+| :--- | :--- |
+| Sequence | 25 noise frames · 16 channels |
+| Guidance | 1,024 tracks per main scene |
+| Image / noise grid | 128×192 / 64×96 |
+| Sphere texture | 512×768; image dimensions ×4 |
+| Random seed | 42 for the four main scenes |
+| Geometry | Synthetic foregrounds and a static background plane |
+
+These sizes are demo settings, not Wan VAE settings. Foreground counts and trajectories are test fixtures, not the paper’s mask GUI or learned geometry pipeline.
 
 ```python
 import numpy as np
+
 with np.load('results/occlusion.npz', allow_pickle=False) as data:
-    noise = data['noise']  # [T, H_lat, W_lat, C], float32
+    noise = data['noise']    # [T, H_lat, W_lat, C], float32
     tracks = data['tracks']  # [T, N, 3], world coordinates
 ```
 
-## Using your own tracks and cameras
+Each NPZ also stores raw noise, sphere samples, the initial reference, source IDs, ownership, coverage, depth, projections, camera parameters, visibility, and configuration.
+
+</details>
+
+[**Full experiment report →**](results/REPORT.md)
+
+## Bring your own tracks
 
 ```python
 import numpy as np
@@ -85,7 +178,12 @@ np.save('noise.npy', result['noise'])
 
 Use right/down/forward camera axes and rigid extrinsics. All geometry must share a coordinate system and depth scale. Choose image/grid sizes to match your input; the values above are demo settings and do not define Wan's VAE compression. Visibility defaults to true when omitted; the module does not compute dense surface visibility.
 
-## Paper fidelity and unresolved choices
+## Implementation fidelity
+
+The [paper audit](docs/PAPER_AUDIT.md) maps each operation to the main text and appendices, distinguishing explicit requirements from implementation choices.
+
+<details>
+<summary><b>Read the unresolved choices and reproduction boundaries</b></summary>
 
 Read [PAPER_AUDIT.md](docs/PAPER_AUDIT.md) for the section-by-section mapping to §3.1–3.3, §4.3, Appendix A, and Appendix B.3.
 
@@ -97,7 +195,9 @@ Read [PAPER_AUDIT.md](docs/PAPER_AUDIT.md) for the section-by-section mapping to
 
 These tests establish consistency with the documented interpretation. They do not establish equivalence to the authors' code, improvement over Go-with-the-Flow, or downstream video quality.
 
-## Repository layout
+</details>
+
+## Project structure
 
 ```text
 unicamo_noise/core.py       Noise construction and geometric sampling
